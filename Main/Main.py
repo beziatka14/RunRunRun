@@ -1,5 +1,5 @@
 import pygame
-from random import choice
+from random import choice, randint
 
 
 pygame.init()
@@ -15,6 +15,7 @@ TOP = 20
 CELL_SIZE = 40
 SHOW_FROM = 3
 SPEED = 1
+FPS = 30
 list_for_choice = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
 
 def generate(line, y):
@@ -31,8 +32,6 @@ def generate(line, y):
         x += CELL_SIZE
 
 
-
-
 def load_image(name, colorkey=None):
     image = pygame.image.load(name).convert_alpha()
     return image
@@ -44,10 +43,12 @@ class Cell(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
-    def update(self):
-        if self.rect.y < TOP + (HEIGHT_IN_CELLS - SHOW_FROM) * CELL_SIZE:
-            self.rect.y += SPEED
-        else:
+    def update(self, *args):
+        if args and args[0]:
+            self.rect.y += CELL_SIZE
+        # else:
+        #     self.rect.y += SPEED
+        if self.rect.y > TOP + (HEIGHT_IN_CELLS - SHOW_FROM) * CELL_SIZE:
             self.kill()
             generate(choice(list_for_choice), -SHOW_FROM * CELL_SIZE + TOP)
 
@@ -82,12 +83,52 @@ class RailwayCell(Cell):
         self.image = RoadCell.image
 
 
+class Road:
+    def __init__(self, y):
+        self.y = y
+        self.course_to_the_right = choice(True, False)
+        self.speed = randint(1, 3)
+
+    def create_a_car(self):
+        if self.course_to_the_right:
+            x = LEFT - CELL_SIZE
+        else:
+            x = LEFT + CELL_SIZE * WIDTH_IN_CELLS
+        Car(self, cars, x, y)
+
+
+class Car(pygame.sprite.Sprite):
+    image1 = load_image("../Images/car_image.png")
+    image2 = load_image("../Images/car_image.png")
+    image3 = load_image("../Images/car_image.png")
+    def __init__(self, road, group, x, y):
+        super().__init__(group)
+        self.image = choice((Car.image1, Car.image2, Car.image3))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.road = road
+
+    def update(self, *args):
+        if self.road.course_to_the_right:
+            if self.rect.x < LEFT + WIDTH_IN_CELLS * CELL_SIZE:
+                self.rect.x += self.road.speed
+            else:
+                self.kill()
+        else:
+            if self.rect.x > LEFT - CELL_SIZE:
+                self.rect.x -= self.road.speed
+        if args and args[0]:
+            self.rect.y += CELL_SIZE
+
+
 
 if __name__ == "__main__":
     running = True
     screen.fill((255, 255, 255))
 
     field = pygame.sprite.Group()
+    cars = pygame.sprite.Group()
 
     y = -SHOW_FROM * CELL_SIZE + TOP
     for i in range(HEIGHT_IN_CELLS):
@@ -96,14 +137,15 @@ if __name__ == "__main__":
         generate(line, y)
 
     while running:
+        move = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
+                    move = True
+        field.update(move)
         field.draw(screen)
-        field.update()
-
         pygame.display.flip()
-        pygame.time.delay(50)
 
     pygame.quit()
