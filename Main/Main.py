@@ -18,6 +18,7 @@ SPEED = 1
 FPS = 30
 list_for_choice = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
 
+
 def generate(line, y):
     x = LEFT
     for j in range(WIDTH_IN_CELLS):
@@ -36,6 +37,13 @@ def load_image(name, colorkey=None):
     image = pygame.image.load(name).convert_alpha()
     return image
 
+
+normal_cell_image = load_image("../Images/normal_cell_image.png")
+road_cell_image = load_image("../Images/road_cell_image.png")
+river_cell_image = load_image("../Images/river_cell_image.png")
+railway_cell_image = load_image("../Images/railway_cell_image.png")
+
+
 class Cell(pygame.sprite.Sprite):
     def __init__(self, group, x, y):
         super().__init__(group)
@@ -50,37 +58,30 @@ class Cell(pygame.sprite.Sprite):
         #     self.rect.y += SPEED
         if self.rect.y > TOP + (HEIGHT_IN_CELLS - SHOW_FROM) * CELL_SIZE:
             self.kill()
-            generate(choice(list_for_choice), -SHOW_FROM * CELL_SIZE + TOP)
 
 
 class NormalCell(Cell):
-    image = load_image("../Images/normal_cell_image.png")
+    image = normal_cell_image
     def init(self, group, x, y):
         super().__init__(group, x, y)
-        self.image = NormalCell.image
 
 
 class RoadCell(Cell):
-    image = load_image("../Images/road_cell_image.png")
+    image = road_cell_image
     def init(self, group, x, y):
-        super().__init__(group)
-        self.image = RoadCell.image
+        super().__init__(group, x, y)
 
 
 class RiverCell(Cell):
-    image = load_image("../Images/river_cell_image.png")
-
+    image = river_cell_image
     def init(self, group, x, y):
-        super().__init__(group)
-        self.image = RiverCell.image
+        super().__init__(group, x, y)
 
 
 class RailwayCell(Cell):
-    image = load_image("../Images/railway_cell_image.png")
-
+    image = railway_cell_image
     def init(self, group, x, y):
-        super().__init__(group)
-        self.image = RoadCell.image
+        super().__init__(group, x, y)
 
 
 class Road:
@@ -144,6 +145,7 @@ if __name__ == "__main__":
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                     move = True
+                    generate(choice(list_for_choice), -SHOW_FROM * CELL_SIZE + TOP)
         field.update(move)
         field.draw(screen)
         pygame.display.flip()
