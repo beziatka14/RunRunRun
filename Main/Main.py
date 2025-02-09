@@ -6,12 +6,12 @@ screen = pygame.display.set_mode(size)
 
 WIDTH = 400
 HEIGHT = 600
-WIDTH_IN_CELLS = 9
-HEIGHT_IN_CELLS = 20
-LEFT = 20
-TOP = 20
+WIDTH_IN_CELLS = 10
+HEIGHT_IN_CELLS = 24
+LEFT = 0
+TOP = 0
 CELL_SIZE = 40
-SHOW_FROM = 8
+SHOW_FROM = 12
 ROADS = []
 list_for_choice = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
 
@@ -100,48 +100,50 @@ class Road:
     def __init__(self, y):
         self.y = y
         self.course_to_the_right = choice((True, False))
-        self.speed = randint(1, 3)
-        self.start_of_timer = pygame.time.get_ticks()
-        self.interval = 0
-        self.create_a_car()
-
-    def update(self, move):
-        if pygame.time.get_ticks() - self.start_of_timer >= self.interval:
-            self.create_a_car()
-        if move:
-            self.y += CELL_SIZE
-            if self.y >= TOP + (HEIGHT_IN_CELLS - SHOW_FROM) * CELL_SIZE:
-                del ROADS[0]
-
-    def create_a_car(self):
-        self.start_of_timer = pygame.time.get_ticks()
         if self.course_to_the_right:
-            x = LEFT - CELL_SIZE
+            self.x = LEFT - CELL_SIZE
         else:
-            x = LEFT + CELL_SIZE * WIDTH_IN_CELLS
-        Car(self, cars, x)
+            self.x = LEFT + CELL_SIZE * WIDTH_IN_CELLS
+        self.speed = randint(1, 3)
 
-        self.interval = randint(2, 5) * 1000
+        self.start = pygame.time.get_ticks()
+        self.interval = 0
+
+        self.create_a_car(self.start)
+
+
+    def update(self):
+        self.y += CELL_SIZE
+        if self.y >= TOP + (HEIGHT_IN_CELLS - SHOW_FROM) * CELL_SIZE:
+            return True
+        return False
+
+    def create_a_car(self, time_now):
+        if time_now - self.start >= self.interval:
+            Car(cars, self.x, self.y, self.course_to_the_right, self.speed)
+            self.start = time_now
+            self.interval = randint(8, 16) * 250
 
 
 class Car(pygame.sprite.Sprite):
-    def __init__(self, road, group, x):
+    def __init__(self, group, x, y, course_to_the_right, speed):
         super().__init__(group)
         self.image = choice((car1_image, car2_image, car3_image))
         self.rect = self.image.get_rect()
-        self.road = road
         self.rect.x = x
-        self.rect.y = self.road.y
+        self.rect.y = y
+        self.course_to_the_right = course_to_the_right
+        self.speed = speed
 
     def update(self, *args):
-        if self.road.course_to_the_right:
+        if self.course_to_the_right:
             if self.rect.x < LEFT + WIDTH_IN_CELLS * CELL_SIZE:
-                self.rect.x += self.road.speed
+                self.rect.x += self.speed
             else:
                 self.kill()
         else:
             if self.rect.x > LEFT - CELL_SIZE:
-                self.rect.x -= self.road.speed
+                self.rect.x -= self.speed
             else:
                 self.kill()
         if args and args[0]:
@@ -174,12 +176,25 @@ if __name__ == "__main__":
                 if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                     move = True
                     generate(choice(list_for_choice), -SHOW_FROM * CELL_SIZE + TOP)
-        for road in ROADS:
-            road.update(move)
+
+        time_now = pygame.time.get_ticks()
+        for i in range(len(ROADS)):
+            ROADS[i].create_a_car(time_now)
         field.update(move)
-        field.draw(screen)
         cars.update(move)
+        field.draw(screen)
         cars.draw(screen)
+        delete = False
+        if move:
+            for i in range(len(ROADS)):
+                if ROADS[i].update():
+                    delete = True
+        if delete:
+            ROADS = ROADS[1:]
+        if move:
+            for i in ROADS:
+                print(i.y, end=" ")
+            print("")
         pygame.time.delay(40)
         pygame.display.flip()
 
