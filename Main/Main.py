@@ -4,24 +4,25 @@ from random import choice, randint
 size = width, height = 400, 600
 screen = pygame.display.set_mode(size)
 
+# константы
 WIDTH = 400
 HEIGHT = 600
 WIDTH_IN_CELLS = 9
 HEIGHT_IN_CELLS = 24
-LEFT = 20
-TOP = 60
+LEFT = 20  # отступ слева
+TOP = 60  # отступ сверху
 CELL_SIZE = 40
 PLAYER_SIZE = 24
 SPACE = (CELL_SIZE - PLAYER_SIZE) // 2
-SHOW_FROM = 12
-LINES = []
+SHOW_FROM = 12  # номер линии, начиная с которой игрок может видеть поле
+LINES = []  # список хранит объекты класса Line
 START_Y = TOP - (HEIGHT_IN_CELLS - SHOW_FROM) * CELL_SIZE
 START_FIELD_HEIGHT = 7
 MAX_PLAYER_Y = START_Y + (HEIGHT_IN_CELLS - START_FIELD_HEIGHT // 2) * CELL_SIZE
 list_for_choice = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
 
 
-def generate(line, y):
+def generate(line, y):  # функция генерации новой линии
     global LINES
     x = LEFT
     if line == 0:
@@ -45,11 +46,12 @@ def generate(line, y):
             RailwayCell(field, x, y)
             x += CELL_SIZE
 
+
 def load_image(name, colorkey=None):
     image = pygame.image.load(name).convert_alpha()
     return image
 
-
+# Изображения
 frame_image = load_image("../Images/frame_image.png")
 frame_rect = frame_image.get_rect()
 
@@ -79,7 +81,7 @@ train_image_rigth = load_image("../Images/train_image_right.png")
 train_image_left = load_image("../Images/train_image_left.png")
 
 
-
+# родительский класс клетки
 class Cell(pygame.sprite.Sprite):
     def __init__(self, group, x, y):
         super().__init__(group)
@@ -122,6 +124,7 @@ class RailwayCell(Cell):
         super().__init__(group, x, y)
 
 
+# родительский класс линии
 class Line:
     def __init__(self, y, me, move=False):
         self.y = y
@@ -188,6 +191,7 @@ class Railway(Line):
             self.interval = randint(4, 7) * 1000
 
 
+# классы подвижных объектов
 class Car(pygame.sprite.Sprite):
     def __init__(self, group, x, y, course_to_the_right, speed):
         super().__init__(group)
@@ -275,6 +279,7 @@ class Train(pygame.sprite.Sprite):
             self.kill()
 
 
+# класс игрока
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(player_group)
@@ -336,7 +341,7 @@ if __name__ == "__main__":
     player_group = pygame.sprite.Group()
 
     player = Player()
-
+    # создание начального поля
     y = TOP + (HEIGHT_IN_CELLS - SHOW_FROM + 1) * CELL_SIZE
     for i in range(START_FIELD_HEIGHT):
         line = 0
@@ -348,8 +353,8 @@ if __name__ == "__main__":
         generate(line, y)
 
     while running:
-        move = False
-        course = 's'
+        move = False  # движение поля
+        course = 's'  # направление игрока
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -358,7 +363,9 @@ if __name__ == "__main__":
                     course = 'f'
                     if player.rect.y == MAX_PLAYER_Y:
                         move = True
+                        # генерация новой линии
                         generate(choice(list_for_choice), -SHOW_FROM * CELL_SIZE + TOP)
+                        # удаление последней линии
                         LINES = LINES[1:]
                 if event.key == pygame.K_RIGHT:
                     course = 'r'
@@ -382,9 +389,7 @@ if __name__ == "__main__":
             if LINES[i].moving_line:
                 LINES[i].create_an_object(time_now)
 
-        print(LINES[player.line_i].me)
         pygame.time.delay(40)
         pygame.display.flip()
 
-    if input() == '0':
-        pygame.quit()
+    pygame.quit()
