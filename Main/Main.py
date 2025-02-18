@@ -6,18 +6,18 @@ screen = pygame.display.set_mode(size)
 
 WIDTH = 400
 HEIGHT = 600
-WIDTH_IN_CELLS = 10
+WIDTH_IN_CELLS = 9
 HEIGHT_IN_CELLS = 24
-LEFT = 0
-TOP = 0
+LEFT = 20
+TOP = 60
 CELL_SIZE = 40
 PLAYER_SIZE = 24
 SPACE = (CELL_SIZE - PLAYER_SIZE) // 2
 SHOW_FROM = 12
 LINES = []
 START_Y = TOP - (HEIGHT_IN_CELLS - SHOW_FROM) * CELL_SIZE
-START_FIELD_HEIGHT = 6
-MAX_PLAYER_Y = TOP + (SHOW_FROM - 4) * CELL_SIZE + SPACE
+START_FIELD_HEIGHT = 7
+MAX_PLAYER_Y = START_Y + (HEIGHT_IN_CELLS - START_FIELD_HEIGHT // 2) * CELL_SIZE
 list_for_choice = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
 
 
@@ -49,6 +49,10 @@ def load_image(name, colorkey=None):
     image = pygame.image.load(name).convert_alpha()
     return image
 
+
+frame_image = load_image("../Images/frame_image.png")
+frame_rect = frame_image.get_rect()
+
 player_image_forward = load_image("../Images/player_image_forward.png")
 player_image_right = load_image("../Images/player_image_right.png")
 player_image_left = load_image("../Images/player_image_left.png")
@@ -59,14 +63,24 @@ road_cell_image = load_image("../Images/road_cell_image.png")
 river_cell_image = load_image("../Images/river_cell_image.png")
 railway_cell_image = load_image("../Images/railway_cell_image.png")
 
-car1_image = load_image("../Images/car1_image.png")
-car2_image = load_image("../Images/car2_image.png")
-car3_image = load_image("../Images/car3_image.png")
+car1_image_right = load_image("../Images/car1_image_right.png")
+car2_image_right = load_image("../Images/car2_image_right.png")
+car3_image_right = load_image("../Images/car3_image_right.png")
+car4_image_right = load_image("../Images/car4_image_right.png")
+car5_image_right = load_image("../Images/car5_image_right.png")
+car1_image_left = load_image("../Images/car1_image_left.png")
+car2_image_left = load_image("../Images/car2_image_left.png")
+car3_image_left = load_image("../Images/car3_image_left.png")
+car4_image_left = load_image("../Images/car4_image_left.png")
+car5_image_left = load_image("../Images/car5_image_left.png")
+
 boat_image = load_image("../Images/boat_image.png")
-train_image = load_image("../Images/train_image.png")
+train_image_rigth = load_image("../Images/train_image_right.png")
+train_image_left = load_image("../Images/train_image_left.png")
+
+
 
 class Cell(pygame.sprite.Sprite):
-
     def __init__(self, group, x, y):
         super().__init__(group)
         self.rect = self.image.get_rect()
@@ -76,8 +90,6 @@ class Cell(pygame.sprite.Sprite):
     def update(self, *args):
         if args and args[0]:
             self.rect.y += CELL_SIZE
-        # else:
-        #     self.rect.y += SPEED
         if self.rect.y > TOP + (HEIGHT_IN_CELLS - SHOW_FROM) * CELL_SIZE:
             self.kill()
 
@@ -121,7 +133,7 @@ class Line:
             else:
                 self.x = LEFT + CELL_SIZE * WIDTH_IN_CELLS
             self.start = pygame.time.get_ticks()
-            self.interval = 0
+            self.interval = self.interval = randint(0, 5) * 200
 
 
 class Normal(Line):
@@ -155,7 +167,7 @@ class River(Line):
         if time_now - self.start >= self.interval:
             Boat(moving_objects, self.x, self.y, self.course_to_the_right, self.speed)
             self.start = time_now
-            self.interval = randint(8, 16) * 250
+            self.interval = randint(8, 40) * 250
 
 
 class Railway(Line):
@@ -167,7 +179,7 @@ class Railway(Line):
         else:
             self.x = LEFT + WIDTH_IN_CELLS * CELL_SIZE
         self.speed = 23
-        self.interval = 3000
+        self.interval = randint(4, 7) * 1000
 
     def create_an_object(self, time_now):
         if time_now - self.start >= self.interval:
@@ -179,7 +191,10 @@ class Railway(Line):
 class Car(pygame.sprite.Sprite):
     def __init__(self, group, x, y, course_to_the_right, speed):
         super().__init__(group)
-        self.image = choice((car1_image, car2_image, car3_image))
+        if course_to_the_right:
+            self.image = choice((car1_image_right, car2_image_right, car3_image_right, car4_image_right, car5_image_right))
+        else:
+            self.image = choice((car1_image_left, car2_image_left, car3_image_left, car4_image_left, car5_image_left))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -233,7 +248,10 @@ class Boat(pygame.sprite.Sprite):
 class Train(pygame.sprite.Sprite):
     def __init__(self, group, x, y, course_to_the_right, speed):
         super().__init__(group)
-        self.image = train_image
+        if course_to_the_right:
+            self.image = train_image_rigth
+        else:
+            self.image = train_image_left
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -264,7 +282,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = LEFT + WIDTH_IN_CELLS // 2 * CELL_SIZE + SPACE
         self.rect.y = MAX_PLAYER_Y
-        self.line_i = 4
+        self.line_i = START_FIELD_HEIGHT // 2
         self.boat = None
 
     def update(self, *args):
@@ -280,7 +298,7 @@ class Player(pygame.sprite.Sprite):
                 running = False
 
         if self.boat:
-            self.rect.x = self.boat.rect.x + SPACE
+            self.rect.x = self.boat.rect.x + 6
 
         if args:
             course = args[0]
@@ -292,20 +310,19 @@ class Player(pygame.sprite.Sprite):
                 self.rect.x = LEFT + (round((self.rect.x - SPACE - LEFT) / CELL_SIZE)) * CELL_SIZE + SPACE
             elif course == 'r':
                 self.image = player_image_right
-                if self.rect.x != LEFT + (WIDTH_IN_CELLS - 1) * CELL_SIZE:
+                if self.rect.x != LEFT + (WIDTH_IN_CELLS - 1) * CELL_SIZE + SPACE:
                     self.rect.x += CELL_SIZE
             elif course == 'l':
                 self.image = player_image_left
-                if self.rect.x != LEFT:
+                if self.rect.x != LEFT + SPACE:
                     self.rect.x -= CELL_SIZE
             elif course == 'd':
                 self.image = player_image_backward
-                if self.rect.y != START_Y + HEIGHT_IN_CELLS * CELL_SIZE:
+                if self.rect.y < START_Y + HEIGHT_IN_CELLS * CELL_SIZE:
                     self.rect.y += CELL_SIZE
                     self.rect.x = LEFT + (round((self.rect.x - SPACE - LEFT) / CELL_SIZE)) * CELL_SIZE + SPACE
                     self.line_i -= 1
-        # return running
-        return True
+        return running
 
 
 if __name__ == "__main__":
@@ -357,12 +374,15 @@ if __name__ == "__main__":
         moving_objects.draw(screen)
         player_group.draw(screen)
 
+        screen.blit(frame_image, frame_rect)
+
         time_now = pygame.time.get_ticks()
         for i in range(len(LINES)):
             LINES[i].y = START_Y + (HEIGHT_IN_CELLS - i) * CELL_SIZE
             if LINES[i].moving_line:
                 LINES[i].create_an_object(time_now)
 
+        print(LINES[player.line_i].me)
         pygame.time.delay(40)
         pygame.display.flip()
 
