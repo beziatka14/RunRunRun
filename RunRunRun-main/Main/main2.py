@@ -443,7 +443,7 @@ class GameOverScreen:
 
     def draw(self):
         overlay = pygame.Surface((width, height), pygame.SRCALPHA)
-        # overlay.fill((0, 0, 0, 128))
+
         self.screen.blit(overlay, (0, 0))
 
         shadow_offset = 2
@@ -585,7 +585,7 @@ if __name__ == "__main__":
                     score = 0
                     break
 
-            # screen.fill((0, 0, 0))
+
             game_over_screen.draw()
             pygame.display.flip()
 
