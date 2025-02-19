@@ -1,8 +1,10 @@
 import pygame
 from random import choice, randint
-
+import sqlite3
 size = width, height = 400, 600
 screen = pygame.display.set_mode(size)
+
+
 
 # константы
 WIDTH = 400
@@ -24,7 +26,36 @@ list_for_choice = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3]
 score = 0
 max_score = 0
 
+def init_db():
+    conn = sqlite3.connect('game_data.db') #  бд для хранения рекорда и счета
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS scores
+                 (id INTEGER PRIMARY KEY, max_score INTEGER)''')
+    conn.commit()
+    conn.close()
 
+init_db()
+def update_max_score(new_score):
+    conn = sqlite3.connect('game_data.db')
+    c = conn.cursor()
+    c.execute("SELECT max_score FROM scores WHERE id = 1")
+    result = c.fetchone()
+    if result:
+        current_max = result[0]
+        if new_score > current_max:
+            c.execute("UPDATE scores SET max_score = ? WHERE id = 1", (new_score,))
+    else:
+        c.execute("INSERT INTO scores (id, max_score) VALUES (1, ?)", (new_score,))
+    conn.commit()
+    conn.close()
+
+def get_max_score():
+    conn = sqlite3.connect('game_data.db')
+    c = conn.cursor()
+    c.execute("SELECT max_score FROM scores WHERE id = 1")
+    result = c.fetchone()
+    conn.close()
+    return result[0] if result else 0
 def generate(line, y):  # функция генерации новой линии
     global LINES
     x = LEFT
@@ -56,33 +87,33 @@ def load_image(name, colorkey=None):
 
 
 # Изображения
-frame_image = load_image("Images/frame_image.png")
+frame_image = load_image("../Images/frame_image.png")
 frame_rect = frame_image.get_rect()
 
-player_image_forward = load_image("Images/player_image_forward.png")
-player_image_right = load_image("Images/player_image_right.png")
-player_image_left = load_image("Images/player_image_left.png")
-player_image_backward = load_image("Images/player_image_backward.png")
+player_image_forward = load_image("../Images/player_image_forward.png")
+player_image_right = load_image("../Images/player_image_right.png")
+player_image_left = load_image("../Images/player_image_left.png")
+player_image_backward = load_image("../Images/player_image_backward.png")
 
-normal_cell_image = load_image("Images/normal_cell_image.png")
-road_cell_image = load_image("Images/road_cell_image.png")
-river_cell_image = load_image("Images/river_cell_image.png")
-railway_cell_image = load_image("Images/railway_cell_image.png")
+normal_cell_image = load_image("../Images/normal_cell_image.png")
+road_cell_image = load_image("../Images/road_cell_image.png")
+river_cell_image = load_image("../Images/river_cell_image.png")
+railway_cell_image = load_image("../Images/railway_cell_image.png")
 
-car1_image_right = load_image("Images/car1_image_right.png")
-car2_image_right = load_image("Images/car2_image_right.png")
-car3_image_right = load_image("Images/car3_image_right.png")
-car4_image_right = load_image("Images/car4_image_right.png")
-car5_image_right = load_image("Images/car5_image_right.png")
-car1_image_left = load_image("Images/car1_image_left.png")
-car2_image_left = load_image("Images/car2_image_left.png")
-car3_image_left = load_image("Images/car3_image_left.png")
-car4_image_left = load_image("Images/car4_image_left.png")
-car5_image_left = load_image("Images/car5_image_left.png")
+car1_image_right = load_image("../Images/car1_image_right.png")
+car2_image_right = load_image("../Images/car2_image_right.png")
+car3_image_right = load_image("../Images/car3_image_right.png")
+car4_image_right = load_image("../Images/car4_image_right.png")
+car5_image_right = load_image("../Images/car5_image_right.png")
+car1_image_left = load_image("../Images/car1_image_left.png")
+car2_image_left = load_image("../Images/car2_image_left.png")
+car3_image_left = load_image("../Images/car3_image_left.png")
+car4_image_left = load_image("../Images/car4_image_left.png")
+car5_image_left = load_image("../Images/car5_image_left.png")
 
-boat_image = load_image("Images/boat_image.png")
-train_image_rigth = load_image("Images/train_image_right.png")
-train_image_left = load_image("Images/train_image_left.png")
+boat_image = load_image("../Images/boat_image.png")
+train_image_rigth = load_image("../Images/train_image_right.png")
+train_image_left = load_image("../Images/train_image_left.png")
 
 
 # родительский класс клетки
@@ -344,13 +375,13 @@ class Player(pygame.sprite.Sprite):
 class Menu:
     def __init__(self, screen):
         self.screen = screen
-        self.font = pygame.font.Font("Fonts/pixel_font.otf", 24)  # шрифт для кнопки
-        self.pixel_font = pygame.font.Font("Fonts/pixel_font.otf", 40)  # шрифт для заголовка
+        self.font = pygame.font.Font("../Fonts/pixel_font.otf", 24)  # шрифт для кнопки
+        self.pixel_font = pygame.font.Font("../Fonts/pixel_font.otf", 40)  # шрифт для заголовка
         self.start_button = pygame.Rect(100, 450, 200, 50)
         self.start_text = self.font.render('Начать игру', True, (255, 255, 255))
         self.start_text_shadow = self.font.render('Начать игру', True, (0, 0, 0))  # тень
         self.start_text_rect = self.start_text.get_rect(center=self.start_button.center)
-        self.background = load_image("Images/menu.png")
+        self.background = load_image("../Images/menu.png")
         self.title_text = self.pixel_font.render('Crossy Road', True, (255, 255, 255))
         self.title_text_shadow = self.pixel_font.render('Crossy Road', True, (0, 0, 0))  # тень
         self.title_text_rect = self.title_text.get_rect(center=(width // 2, 100))
@@ -391,11 +422,11 @@ class GameOverScreen:
     def __init__(self, screen, max_score):
         self.screen = screen
         self.max_score = max_score
-        self.font = pygame.font.Font("Fonts/pixel_font.otf", 60)
-        self.score_font = pygame.font.Font("Fonts/pixel_font.otf", 30)
-        self.button_font = pygame.font.Font("Fonts/pixel_font.otf", 24)
-        # текст "Game Over" 
-        self.game_over_text = self.font.render('Game Over', True, (255, 0, 0))
+        self.font = pygame.font.Font("../Fonts/pixel_font.otf", 60)
+        self.score_font = pygame.font.Font("../Fonts/pixel_font.otf", 30)
+        self.button_font = pygame.font.Font("../Fonts/pixel_font.otf", 24)
+        # текст "Game Over"
+        self.game_over_text = self.font.render('Game Over', True, (255, 63, 63))
         self.game_over_text_shadow = self.font.render('Game Over', True, (0, 0, 0))
         self.game_over_text_rect = self.game_over_text.get_rect(center=(width // 2, height // 2 - 50))
 
@@ -404,7 +435,7 @@ class GameOverScreen:
         self.max_score_text_shadow = self.score_font.render(f'Рекорд: {self.max_score}', True, (0, 0, 0))
         self.max_score_text_rect = self.max_score_text.get_rect(center=(width // 2, height // 2 + 20))
 
-        # кнопка "Начать заново" 
+        # кнопка "Начать заново"
         self.restart_button = pygame.Rect(width // 2 - 150, height // 2 + 80, 300, 50)
         self.restart_text = self.button_font.render('Начать заново', True, (255, 255, 255))
         self.restart_text_shadow = self.button_font.render('Начать заново', True, (0, 0, 0))
@@ -412,7 +443,7 @@ class GameOverScreen:
 
     def draw(self):
         overlay = pygame.Surface((width, height), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 128))
+
         self.screen.blit(overlay, (0, 0))
 
         shadow_offset = 2
@@ -443,6 +474,10 @@ if __name__ == "__main__":
     menu = Menu(screen)
     in_menu = True
 
+    # берем рекорд из базы данных
+    max_score = get_max_score()
+    menu.max_score = max_score
+
     while in_menu:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -456,7 +491,7 @@ if __name__ == "__main__":
         menu.draw()
         pygame.display.flip()
 
-    while True:
+    while running:
         field = pygame.sprite.Group()
         moving_objects = pygame.sprite.Group()
         player_group = pygame.sprite.Group()
@@ -472,9 +507,8 @@ if __name__ == "__main__":
             y -= CELL_SIZE
             generate(line, y)
 
-        font = pygame.font.Font("Fonts/pixel_font.otf", 16)
+        font = pygame.font.Font("../Fonts/pixel_font.otf", 16)
 
-        running = True
         while running:
             move = False  # движение поля
             course = 's'  # направление игрока
@@ -530,6 +564,9 @@ if __name__ == "__main__":
             pygame.time.delay(40)
             pygame.display.flip()
 
+        # обновление рекорда в бд
+        update_max_score(max_score)
+
         # экран "Game Over"
         game_over_screen = GameOverScreen(screen, max_score)
         game_over = True
@@ -540,6 +577,7 @@ if __name__ == "__main__":
                     exit()
                 if game_over_screen.handle_event(event):
                     game_over = False  # перезапуск игры
+                    running = True
                     field.empty()
                     moving_objects.empty()
                     player_group.empty()
@@ -547,6 +585,8 @@ if __name__ == "__main__":
                     score = 0
                     break
 
-            screen.fill((0, 0, 0))
+
             game_over_screen.draw()
             pygame.display.flip()
+
+    pygame.quit()
